@@ -51,13 +51,17 @@ export const registerUser = async (req: Request, res: Response) => {
 
     res.status(201).json({
       success: true,
-      message: "Register Successful",
+      message: "Registration Successful",
       user: {
-        createdUser,
+        id: createdUser.id,
+        email: createdUser.email,
+        name: createdUser.name,
+        role: createdUser.role,
       },
       token,
     });
   } catch (error) {
+    console.log(error);
     res
       .status(500)
       .json({ success: false, message: "Internal server error", error });
