@@ -20,7 +20,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
     //check if there is any existing user
     if (existingUser) {
-      res.status(400).json({ success: false, message: "user already exists" });
+      res.status(401).json({ success: false, message: "user already exists" });
       return;
     }
 
@@ -61,12 +61,56 @@ export const registerUser = async (req: Request, res: Response) => {
       token,
     });
   } catch (error) {
-    console.log(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal server error", error });
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
 //login user controller
-export const loginUser = () => {};
+export const loginUser = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(400).json({ success: false, message: "Missing details" });
+    return;
+  }
+
+  try {
+    const existingUser = await db.user.findUnique({
+      where: { email },
+    });
+
+    //throw error if user doesn't exists
+    if (!existingUser) {
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    //check if password matches
+    const isMatch = await bcrypt.compare(password, existingUser.password);
+
+    if (!isMatch) {
+      res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+      return;
+    }
+
+    const token = generateToken(existingUser.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Login Successful",
+      user: {
+        id: existingUser.id,
+        email: existingUser.email,
+        name: existingUser.name,
+        role: existingUser.role,
+      },
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
