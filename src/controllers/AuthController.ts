@@ -6,9 +6,9 @@ import generateToken from "../utils/generateToken";
 
 //register user controller
 export const registerUser = async (req: Request, res: Response) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, phone } = req.body;
 
-  if (!name || !email || !password || !role) {
+  if (!name || !email || !password || !role || !phone) {
     res.status(400).json({ success: false, message: "Missing details" });
     return;
   }
@@ -41,6 +41,7 @@ export const registerUser = async (req: Request, res: Response) => {
       password: hashPassword,
       role,
       name,
+      phone,
     };
 
     const createdUser = await db.user.create({
@@ -57,6 +58,7 @@ export const registerUser = async (req: Request, res: Response) => {
         email: createdUser.email,
         name: createdUser.name,
         role: createdUser.role,
+        phone: createdUser.phone,
       },
       token,
     });

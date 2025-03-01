@@ -11,3 +11,13 @@ CREATE TABLE `User` (
     UNIQUE INDEX `User_email_key`(`email`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AlterTable
+ALTER TABLE `user` ADD COLUMN `image` VARCHAR(191) NULL,
+    ADD COLUMN `phone` VARCHAR(191) NOT NULL,
+    MODIFY `name` VARCHAR(50) NOT NULL,
+    MODIFY `role` ENUM('USER', 'DERMATOLOGISTS', 'ADMIN') NOT NULL;
+
+-- CreateIndex
+CREATE UNIQUE INDEX `User_phone_key` ON `User`(`phone`);
+

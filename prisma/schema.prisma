@@ -16,13 +16,16 @@ datasource db {
 enum Role {
   USER
   DERMATOLOGISTS
+  ADMIN
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
-  name      String
+  name      String   @db.VarChar(50)
+  phone     String   @unique
+  image     String?
   role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
