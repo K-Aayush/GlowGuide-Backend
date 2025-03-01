@@ -24,12 +24,24 @@ export const registerUser = async (req: Request, res: Response) => {
       return;
     }
 
+    //check existing phonenumber
+    const existingNumber = await db.user.findUnique({
+      where: { phone },
+    });
+
+    if (existingNumber) {
+      res
+        .status(401)
+        .json({ success: false, message: "phone number already exists" });
+      return;
+    }
+
     //Hash password
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(password, salt);
 
     //validate roles
-    const allowedRoles = ["USER", "DERMATOLOGISTS"];
+    const allowedRoles = ["USER", "DERMATOLOGISTS", "ADMIN"];
     if (!allowedRoles.includes(role)) {
       res.status(400).json({ success: false, message: "Invalid role" });
       return;
