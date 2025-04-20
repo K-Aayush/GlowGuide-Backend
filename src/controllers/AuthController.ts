@@ -3,7 +3,10 @@ import { db } from "../lib/prisma";
 import bcrypt from "bcrypt";
 import { Prisma } from "@prisma/client";
 import generateToken from "../utils/generateToken";
-import { Role } from "@prisma/client";
+
+interface AuthRequest extends Request {
+  user?: any;
+}
 
 //register user controller
 export const registerUser = async (req: Request, res: Response) => {
@@ -130,10 +133,19 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getCurrentUser = async (req: Request, res: Response) => {
+export const getCurrentUser = async (req: AuthRequest, res: Response) => {
+  const userId = req.user.id;
+
+  if (!userId) {
+    res
+      .status(401)
+      .json({ success: false, message: "Unauthorized, login again" });
+    return;
+  }
+
   try {
     const user = await db.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: userId },
       select: {
         id: true,
         name: true,
@@ -144,10 +156,11 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: "User not found",
       });
+      return;
     }
 
     res.json({
