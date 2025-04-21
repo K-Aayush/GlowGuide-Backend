@@ -5,6 +5,7 @@ import connectCloudinary from "./config/cloudinary";
 import authRoutes from "./routes/AuthRoutes";
 import productRoutes from "./routes/ProductRoutes";
 import dermotologistRoutes from "./routes/dermotologistRoutes";
+import progressRoutes from "./routes/ProgressRoutes";
 
 //initialize express
 const app = express();
@@ -22,6 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/dermotologist", dermotologistRoutes);
+app.use("/api/dermotologist", dermotologistRoutes);
+app.use("/api/progress", progressRoutes);
 
 const PORT = process.env.PORT || 9000;
 
