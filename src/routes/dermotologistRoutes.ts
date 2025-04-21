@@ -4,7 +4,7 @@ import {
   getPatientDetails,
   getDermatologistStats,
   getRecentActivity,
-} from "../controllers/DermatologistController";
+} from "../controllers/dermotologistController";
 import { authMiddleware, authorize } from "../middleware/authMiddleware";
 
 const router = express.Router();
