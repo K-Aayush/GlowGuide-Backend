@@ -6,6 +6,7 @@ import authRoutes from "./routes/AuthRoutes";
 import productRoutes from "./routes/ProductRoutes";
 import dermotologistRoutes from "./routes/dermotologistRoutes";
 import progressRoutes from "./routes/ProgressRoutes";
+import routineRoutes from "./routes/RoutineRoutes";
 
 //initialize express
 const app = express();
@@ -25,6 +26,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/dermotologist", dermotologistRoutes);
 app.use("/api/dermotologist", dermotologistRoutes);
 app.use("/api/progress", progressRoutes);
+app.use("/api/routine", routineRoutes);
 
 const PORT = process.env.PORT || 9000;
 
