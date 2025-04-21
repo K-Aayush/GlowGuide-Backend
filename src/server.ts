@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import connectCloudinary from "./config/cloudinary";
-import authRoutes from "./routes/AuthRoute";
+import authRoutes from "./routes/AuthRoutes";
 import productRoutes from "./routes/ProductRoutes";
 
 //initialize express

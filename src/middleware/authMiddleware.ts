@@ -6,6 +6,14 @@ interface AuthRequest extends Request {
   user?: any;
 }
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
+
 export const authMiddleware = async (
   req: AuthRequest,
   res: Response,
