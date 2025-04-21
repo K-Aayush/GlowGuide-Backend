@@ -4,6 +4,7 @@ import "dotenv/config";
 import connectCloudinary from "./config/cloudinary";
 import authRoutes from "./routes/AuthRoutes";
 import productRoutes from "./routes/ProductRoutes";
+import dermotologistRoutes from "./routes/dermotologistRoutes";
 
 //initialize express
 const app = express();
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 //routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/dermotologist", dermotologistRoutes);
 
 const PORT = process.env.PORT || 9000;
 
