@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { db } from "../lib/prisma";
 import { SkinType, SkinConcern } from "@prisma/client";
+import cloudinary from "../config/cloudinary";
+import fs from "fs";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -36,6 +38,10 @@ export const getProducts = async (req: Request, res: Response) => {
         orderBy: {
           createdAt: "desc",
         },
+        include: {
+          suitableSkinTypes: true,
+          targetConcerns: true,
+        },
       }),
       db.product.count({ where }),
     ]);
@@ -65,6 +71,10 @@ export const getProductById = async (req: Request, res: Response) => {
 
     const product = await db.product.findUnique({
       where: { id },
+      include: {
+        suitableSkinTypes: true,
+        targetConcerns: true,
+      },
     });
 
     if (!product) {
@@ -102,7 +112,6 @@ export const getRecommendedProducts = async (
       return;
     }
 
-    // Get user's skin profile
     const skinProfile = await db.skinProfile.findUnique({
       where: { userId },
       include: {
@@ -119,11 +128,9 @@ export const getRecommendedProducts = async (
       return;
     }
 
-    // Extract values from relation models
     const skinTypes = skinProfile.SkinType.map((s) => s.type);
     const concerns = skinProfile.Concerns.map((c) => c.concern);
 
-    // Find products matching user's skin type and concerns
     const products = await db.product.findMany({
       where: {
         suitableSkinTypes: {
@@ -137,6 +144,10 @@ export const getRecommendedProducts = async (
       orderBy: {
         sustainabilityScore: "desc",
       },
+      include: {
+        suitableSkinTypes: true,
+        targetConcerns: true,
+      },
     });
 
     res.status(200).json({
@@ -145,6 +156,189 @@ export const getRecommendedProducts = async (
     });
   } catch (error) {
     console.error("Get recommended products error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const createProduct = async (req: Request, res: Response) => {
+  try {
+    const {
+      name,
+      brand,
+      description,
+      ingredients,
+      sustainabilityScore,
+      allergens,
+      skinTypes,
+      concerns,
+    } = req.body;
+
+    let imageUrl = null;
+    if (req.file) {
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path);
+        imageUrl = result.secure_url;
+        // Clean up the temporary file
+        fs.unlinkSync(req.file.path);
+      } catch (uploadError) {
+        console.error("Image upload error:", uploadError);
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
+        throw new Error("Image upload failed");
+      }
+    }
+
+    const product = await db.product.create({
+      data: {
+        name,
+        brand,
+        description,
+        ingredients,
+        sustainabilityScore: Number(sustainabilityScore),
+        allergens,
+        imageUrl,
+        suitableSkinTypes: {
+          create: skinTypes.map((type: SkinType) => ({ type })),
+        },
+        targetConcerns: {
+          create: concerns.map((concern: SkinConcern) => ({ concern })),
+        },
+      },
+      include: {
+        suitableSkinTypes: true,
+        targetConcerns: true,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    console.error("Create product error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      brand,
+      description,
+      ingredients,
+      sustainabilityScore,
+      allergens,
+      skinTypes,
+      concerns,
+    } = req.body;
+
+    let imageUrl;
+    if (req.file) {
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path);
+        imageUrl = result.secure_url;
+        // Clean up the temporary file
+        fs.unlinkSync(req.file.path);
+      } catch (uploadError) {
+        console.error("Image upload error:", uploadError);
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
+        throw new Error("Image upload failed");
+      }
+    }
+
+    // Delete existing skin types and concerns
+    await db.productSkinType.deleteMany({
+      where: { productId: id },
+    });
+    await db.productSkinConcern.deleteMany({
+      where: { productId: id },
+    });
+
+    const product = await db.product.update({
+      where: { id },
+      data: {
+        name,
+        brand,
+        description,
+        ingredients,
+        sustainabilityScore: Number(sustainabilityScore),
+        allergens,
+        ...(imageUrl && { imageUrl }),
+        suitableSkinTypes: {
+          create: skinTypes.map((type: SkinType) => ({ type })),
+        },
+        targetConcerns: {
+          create: concerns.map((concern: SkinConcern) => ({ concern })),
+        },
+      },
+      include: {
+        suitableSkinTypes: true,
+        targetConcerns: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    console.error("Update product error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const product = await db.product.findUnique({
+      where: { id },
+      select: { imageUrl: true },
+    });
+
+    if (product?.imageUrl) {
+      try {
+        const publicId = product.imageUrl.split("/").pop()?.split(".")[0];
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
+      } catch (deleteError) {
+        console.error("Error deleting image from Cloudinary:", deleteError);
+      }
+    }
+
+    // Delete associated records first
+    await db.productSkinType.deleteMany({
+      where: { productId: id },
+    });
+    await db.productSkinConcern.deleteMany({
+      where: { productId: id },
+    });
+
+    await db.product.delete({
+      where: { id },
+    });
+
+    res.json({
+      success: true,
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete product error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
