@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -38,19 +35,37 @@ enum SkinConcern {
   UNEVEN_TEXTURE
 }
 
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum NotificationType {
+  APPOINTMENT
+  CHAT
+  SYSTEM
+}
+
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  password     String
-  name         String        @db.VarChar(50)
-  phone        String        @unique
-  image        String?
-  role         Role
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  skinProfile  SkinProfile?
-  routines     Routine[]
-  progressLogs ProgressLog[]
+  id                   String         @id @default(uuid())
+  email                String         @unique
+  password             String
+  name                 String         @db.VarChar(50)
+  phone                String         @unique
+  image                String?
+  role                 Role
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  skinProfile          SkinProfile?
+  routines             Routine[]
+  progressLogs         ProgressLog[]
+  appointmentsAsUser   Appointment[]  @relation("UserAppointments")
+  appointmentsAsDerm   Appointment[]  @relation("DermatologistAppointments")
+  chatsAsUser          Chat[]         @relation("UserChats")
+  chatsAsDermatologist Chat[]         @relation("DermatologistChats")
+  sentMessages         Message[]      @relation("SentMessages")
+  notifications        Notification[]
 }
 
 model SkinProfile {
@@ -142,4 +157,50 @@ model ProgressLog {
   concerns  SkinConcern
   rating    Int // Scale of 1-5
   createdAt DateTime    @default(now())
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation("UserAppointments", fields: [userId], references: [id], onDelete: Cascade)
+  dermatologistId String
+  dermatologist   User              @relation("DermatologistAppointments", fields: [dermatologistId], references: [id], onDelete: Cascade)
+  date            DateTime
+  status          AppointmentStatus @default(PENDING)
+  notes           String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Chat {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation("UserChats", fields: [userId], references: [id], onDelete: Cascade)
+  dermatologistId String
+  dermatologist   User      @relation("DermatologistChats", fields: [dermatologistId], references: [id], onDelete: Cascade)
+  messages        Message[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
 }
