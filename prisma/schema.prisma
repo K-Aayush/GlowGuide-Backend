@@ -19,14 +19,127 @@ enum Role {
   ADMIN
 }
 
+enum SkinType {
+  DRY
+  OILY
+  COMBINATION
+  NORMAL
+  SENSITIVE
+}
+
+enum SkinConcern {
+  ACNE
+  AGING
+  PIGMENTATION
+  SENSITIVITY
+  DRYNESS
+  OILINESS
+  REDNESS
+  UNEVEN_TEXTURE
+}
+
 model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String
+  name         String        @db.VarChar(50)
+  phone        String        @unique
+  image        String?
+  role         Role
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  skinProfile  SkinProfile?
+  routines     Routine[]
+  progressLogs ProgressLog[]
+}
+
+model SkinProfile {
+  id             String                 @id @default(uuid())
+  userId         String                 @unique
+  user           User                   @relation(fields: [userId], references: [id])
+  allergies      String?
+  goals          String?
+  lastAssessment DateTime               @default(now())
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  SkinType       SkinTypeOnProfile[]
+  Concerns       SkinConcernOnProfile[]
+}
+
+model SkinTypeOnProfile {
+  id            String      @id @default(uuid())
+  skinProfileId String
+  skinProfile   SkinProfile @relation(fields: [skinProfileId], references: [id])
+  type          SkinType
+}
+
+model SkinConcernOnProfile {
+  id            String      @id @default(uuid())
+  skinProfileId String
+  skinProfile   SkinProfile @relation(fields: [skinProfileId], references: [id])
+  concern       SkinConcern
+}
+
+model ProductSkinType {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String   @db.VarChar(50)
-  phone     String   @unique
-  image     String?
-  role      Role
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  type      SkinType
+}
+
+model ProductSkinConcern {
+  id        String      @id @default(uuid())
+  productId String
+  product   Product     @relation(fields: [productId], references: [id])
+  concern   SkinConcern
+}
+
+model Product {
+  id                  String               @id @default(uuid())
+  name                String
+  brand               String
+  description         String               @db.Text
+  ingredients         String               @db.Text
+  sustainabilityScore Int
+  allergens           String?
+  imageUrl            String?
+  routineSteps        RoutineStep[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  suitableSkinTypes   ProductSkinType[]
+  targetConcerns      ProductSkinConcern[]
+}
+
+model Routine {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  name      String
+  type      String
+  steps     RoutineStep[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model RoutineStep {
+  id        String   @id @default(uuid())
+  routineId String
+  routine   Routine  @relation(fields: [routineId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  stepOrder Int
+  notes     String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProgressLog {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  imageUrl  String?
+  notes     String?     @db.Text
+  concerns  SkinConcern
+  rating    Int // Scale of 1-5
+  createdAt DateTime    @default(now())
 }

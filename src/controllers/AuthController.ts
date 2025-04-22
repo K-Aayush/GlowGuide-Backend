@@ -4,6 +4,10 @@ import bcrypt from "bcrypt";
 import { Prisma } from "@prisma/client";
 import generateToken from "../utils/generateToken";
 
+interface AuthRequest extends Request {
+  user?: any;
+}
+
 //register user controller
 export const registerUser = async (req: Request, res: Response) => {
   const { name, email, password, role, phone } = req.body;
@@ -126,5 +130,48 @@ export const loginUser = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const getCurrentUser = async (req: AuthRequest, res: Response) => {
+  const userId = req.user.id;
+
+  if (!userId) {
+    res
+      .status(401)
+      .json({ success: false, message: "Unauthorized, login again" });
+    return;
+  }
+
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phone: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Get current user error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
