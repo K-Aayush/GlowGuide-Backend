@@ -25,10 +25,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/dermotologist", dermotologistRoutes);
-app.use("/api/dermotologist", dermotologistRoutes);
 app.use("/api/progress", progressRoutes);
-app.use("/api/routine", routineRoutes);
-app.use("/api/skin", skinProfileRoutes);
+app.use("/api/routines", routineRoutes);
+app.use("/api/skinProfile", skinProfileRoutes);
 
 const PORT = process.env.PORT || 9000;
 
