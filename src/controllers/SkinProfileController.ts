@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "../lib/prisma";
-import { SkinConcern, SkinType } from "@prisma/client";
+
 
 export const getSkinProfile = async (req: Request, res: Response) => {
   try {
