@@ -3,7 +3,7 @@ import cors from "cors";
 import "dotenv/config";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import connectCloudinary from "./config/cloudinary";
+import cloudinary from "./config/cloudinary";
 import authRoutes from "./routes/AuthRoutes";
 import productRoutes from "./routes/ProductRoutes";
 import dermotologistRoutes from "./routes/dermotologistRoutes";
@@ -29,10 +29,6 @@ const io = new Server(httpServer, {
 
 // Setup socket handlers
 setupSocketHandlers(io);
-
-(async () => {
-  await connectCloudinary();
-})();
 
 // Middlewares
 app.use(cors());
