@@ -15,6 +15,7 @@ import chatRoutes from "./routes/ChatRoutes";
 import appointmentRoutes from "./routes/AppointmentRoutes";
 import notificationRoutes from "./routes/NotificationRoutes";
 import aiRoutes from "./routes/AIRoutes";
+import userRoutes from "./routes/userRoutes";
 import { setupSocketHandlers } from "./socket/socketHandlers";
 
 // Initialize express
@@ -47,6 +48,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/user", userRoutes);
 
 const PORT = process.env.PORT || 9000;
 

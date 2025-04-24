@@ -118,6 +118,7 @@ model Product {
   sustainabilityScore Int
   allergens           String?
   imageUrl            String?
+  price               Decimal              @db.Decimal(10, 2)
   routineSteps        RoutineStep[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

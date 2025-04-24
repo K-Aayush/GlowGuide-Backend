@@ -11,7 +11,12 @@ export const getPatients = async (req: Request, res: Response) => {
         },
       },
       include: {
-        skinProfile: true,
+        skinProfile: {
+          include: {
+            SkinType: true,
+            Concerns: true,
+          },
+        },
         progressLogs: {
           orderBy: { createdAt: "desc" },
           take: 1,
@@ -39,7 +44,12 @@ export const getPatientDetails = async (req: Request, res: Response) => {
     const patient = await db.user.findUnique({
       where: { id },
       include: {
-        skinProfile: true,
+        skinProfile: {
+          include: {
+            SkinType: true,
+            Concerns: true,
+          },
+        },
         progressLogs: {
           orderBy: { createdAt: "desc" },
         },
@@ -107,7 +117,7 @@ export const getDermatologistStats = async (req: Request, res: Response) => {
       db.skinProfile.count({
         where: {
           lastAssessment: {
-            lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Older than 30 days
+            lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
           },
         },
       }),

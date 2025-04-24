@@ -1,8 +1,14 @@
 import { Request, Response } from "express";
 import { db } from "../lib/prisma";
 import { SkinConcern } from "@prisma/client";
+import cloudinary from "../config/cloudinary";
+import fs from "fs";
 
-export const getLogs = async (req: Request, res: Response) => {
+interface AuthRequest extends Request {
+  user?: any;
+}
+
+export const getLogs = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
 
@@ -24,10 +30,10 @@ export const getLogs = async (req: Request, res: Response) => {
   }
 };
 
-export const createLog = async (req: Request, res: Response) => {
+export const createLog = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
-    const { imageUrl, notes, concerns, rating } = req.body;
+    const { notes, concerns, rating } = req.body;
 
     if (!concerns || !rating) {
       res.status(400).json({
@@ -35,6 +41,22 @@ export const createLog = async (req: Request, res: Response) => {
         message: "Concerns and rating are required",
       });
       return;
+    }
+
+    let imageUrl = null;
+    if (req.file) {
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path);
+        imageUrl = result.secure_url;
+        // Clean up the temporary file
+        fs.unlinkSync(req.file.path);
+      } catch (uploadError) {
+        console.error("Image upload error:", uploadError);
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
+        throw new Error("Image upload failed");
+      }
     }
 
     const log = await db.progressLog.create({
@@ -60,7 +82,7 @@ export const createLog = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteLog = async (req: Request, res: Response) => {
+export const deleteLog = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -85,6 +107,18 @@ export const deleteLog = async (req: Request, res: Response) => {
       return;
     }
 
+    // Delete image from Cloudinary if it exists
+    if (log.imageUrl) {
+      try {
+        const publicId = log.imageUrl.split("/").pop()?.split(".")[0];
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId);
+        }
+      } catch (deleteError) {
+        console.error("Error deleting image from Cloudinary:", deleteError);
+      }
+    }
+
     await db.progressLog.delete({
       where: { id },
     });
@@ -102,7 +136,7 @@ export const deleteLog = async (req: Request, res: Response) => {
   }
 };
 
-export const getComparison = async (req: Request, res: Response) => {
+export const getComparison = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
     const { fromDate, toDate } = req.query;
