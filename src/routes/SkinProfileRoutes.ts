@@ -8,7 +8,7 @@ import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
-router.use(authMiddleware); // All routes require authentication
+router.use(authMiddleware);
 
 router.get("/", getSkinProfile);
 router.post("/", createSkinProfile);
