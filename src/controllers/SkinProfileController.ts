@@ -1,13 +1,21 @@
 import { Request, Response } from "express";
 import { db } from "../lib/prisma";
+import { SkinType, SkinConcern } from "@prisma/client";
 
+interface AuthRequest extends Request {
+  user?: any;
+}
 
-export const getSkinProfile = async (req: Request, res: Response) => {
+export const getSkinProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
 
     const profile = await db.skinProfile.findUnique({
       where: { userId },
+      include: {
+        SkinType: true,
+        Concerns: true,
+      },
     });
 
     if (!profile) {
@@ -31,12 +39,12 @@ export const getSkinProfile = async (req: Request, res: Response) => {
   }
 };
 
-export const createSkinProfile = async (req: Request, res: Response) => {
+export const createSkinProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
     const { skinType, concerns, allergies, goals } = req.body;
 
-    if (!skinType || !concerns) {
+    if (!skinType || !concerns || !Array.isArray(concerns)) {
       res.status(400).json({
         success: false,
         message: "Skin type and concerns are required",
@@ -57,17 +65,26 @@ export const createSkinProfile = async (req: Request, res: Response) => {
       return;
     }
 
+    // Create profile with related records
     const profile = await db.skinProfile.create({
       data: {
         userId,
-        SkinType: {
-          create: skinType.map((type: string) => ({ type })),
-        },
-        Concerns: {
-          create: concerns.map((concern: string) => ({ concern })),
-        },
         allergies,
         goals,
+        SkinType: {
+          create: skinType.map((type: { type: SkinType }) => ({
+            type: type.type,
+          })),
+        },
+        Concerns: {
+          create: concerns.map((concern: { concern: SkinConcern }) => ({
+            concern: concern.concern,
+          })),
+        },
+      },
+      include: {
+        SkinType: true,
+        Concerns: true,
       },
     });
 
@@ -84,7 +101,7 @@ export const createSkinProfile = async (req: Request, res: Response) => {
   }
 };
 
-export const updateSkinProfile = async (req: Request, res: Response) => {
+export const updateSkinProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user.id;
     const { skinType, concerns, allergies, goals } = req.body;
@@ -101,18 +118,35 @@ export const updateSkinProfile = async (req: Request, res: Response) => {
       return;
     }
 
+    // Delete existing skin types and concerns
+    await db.skinTypeOnProfile.deleteMany({
+      where: { skinProfileId: profile.id },
+    });
+    await db.skinConcernOnProfile.deleteMany({
+      where: { skinProfileId: profile.id },
+    });
+
+    // Update profile with new data
     const updatedProfile = await db.skinProfile.update({
       where: { userId },
       data: {
-        SkinType: {
-          create: skinType.map((type: string) => ({ type })),
-        },
-        Concerns: {
-          create: concerns.map((concern: string) => ({ concern })),
-        },
         allergies,
         goals,
         lastAssessment: new Date(),
+        SkinType: {
+          create: skinType.map((type: { type: SkinType }) => ({
+            type: type.type,
+          })),
+        },
+        Concerns: {
+          create: concerns.map((concern: { concern: SkinConcern }) => ({
+            concern: concern.concern,
+          })),
+        },
+      },
+      include: {
+        SkinType: true,
+        Concerns: true,
       },
     });
 
