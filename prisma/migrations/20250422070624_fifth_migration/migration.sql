@@ -68,3 +68,5 @@ ALTER TABLE `Message` ADD CONSTRAINT `Message_senderId_fkey` FOREIGN KEY (`sende
 
 -- AddForeignKey
 ALTER TABLE `Notification` ADD CONSTRAINT `Notification_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `Product` ADD COLUMN `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00;

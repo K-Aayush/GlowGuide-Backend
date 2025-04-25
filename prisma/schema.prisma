@@ -71,7 +71,7 @@ model User {
 model SkinProfile {
   id             String                 @id @default(uuid())
   userId         String                 @unique
-  user           User                   @relation(fields: [userId], references: [id])
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   allergies      String?
   goals          String?
   lastAssessment DateTime               @default(now())
@@ -84,28 +84,28 @@ model SkinProfile {
 model SkinTypeOnProfile {
   id            String      @id @default(uuid())
   skinProfileId String
-  skinProfile   SkinProfile @relation(fields: [skinProfileId], references: [id])
+  skinProfile   SkinProfile @relation(fields: [skinProfileId], references: [id], onDelete: Cascade)
   type          SkinType
 }
 
 model SkinConcernOnProfile {
   id            String      @id @default(uuid())
   skinProfileId String
-  skinProfile   SkinProfile @relation(fields: [skinProfileId], references: [id])
+  skinProfile   SkinProfile @relation(fields: [skinProfileId], references: [id], onDelete: Cascade)
   concern       SkinConcern
 }
 
 model ProductSkinType {
   id        String   @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   type      SkinType
 }
 
 model ProductSkinConcern {
   id        String      @id @default(uuid())
   productId String
-  product   Product     @relation(fields: [productId], references: [id])
+  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   concern   SkinConcern
 }
 
@@ -118,6 +118,7 @@ model Product {
   sustainabilityScore Int
   allergens           String?
   imageUrl            String?
+  price               Decimal              @db.Decimal(10, 2)
   routineSteps        RoutineStep[]
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -128,7 +129,7 @@ model Product {
 model Routine {
   id        String        @id @default(uuid())
   userId    String
-  user      User          @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   type      String
   steps     RoutineStep[]
@@ -139,9 +140,9 @@ model Routine {
 model RoutineStep {
   id        String   @id @default(uuid())
   routineId String
-  routine   Routine  @relation(fields: [routineId], references: [id])
+  routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   stepOrder Int
   notes     String?  @db.Text
   createdAt DateTime @default(now())
@@ -151,7 +152,7 @@ model RoutineStep {
 model ProgressLog {
   id        String      @id @default(uuid())
   userId    String
-  user      User        @relation(fields: [userId], references: [id])
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   imageUrl  String?
   notes     String?     @db.Text
   concerns  SkinConcern
