@@ -125,6 +125,8 @@ export const loginUser = async (req: Request, res: Response) => {
         email: existingUser.email,
         name: existingUser.name,
         role: existingUser.role,
+        phone: existingUser.phone,
+        image: existingUser.image,
       },
       token,
     });
@@ -152,6 +154,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
         email: true,
         role: true,
         phone: true,
+        image: true,
       },
     });
 
